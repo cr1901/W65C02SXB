@@ -1,0 +1,5 @@
+.INCLUDE "macros.inc"
+
+.SECTION "EotCookie" SUPERFREE PRIORITY 0
+.HEX "ba486455aa10b2fb68090d9412e62da2"
+.ENDS

@@ -1,0 +1,14 @@
+[objects]
+hello.o
+
+[libraries]
+bank 0 slot 1 ../common/periph.lib
+bank 0 slot 1 ../common/debugger.lib
+bank 0 slot 1 ../common/cookie.lib
+
+[ramsections]
+bank 0 slot 0 org 0 force "DEBUGGER_ZERO_PAGE"
+bank 0 slot 0 org $d0 force "BREAKPOINT_ZERO_PAGE"
+bank 0 slot 0 org $100 force "STACK_PAGE"
+bank 0 slot 1 orga $7c00 force "DEBUGGER_MAIN_RAM"
+bank 0 slot 1 orga $7f00 force "PERIPHERALS_PAGE"

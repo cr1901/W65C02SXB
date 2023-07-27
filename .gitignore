@@ -1,0 +1,7 @@
+*.lib
+*.o
+*.lst
+*.sym
+*.bin
+target/
+Cargo.lock
