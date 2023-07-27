@@ -6,14 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = {version = "4.3.19", features = ["derive"] }
+clap = { version = "4.3.19", default-features=false, features = ["derive"] }
 clap-num = "1.0.2"
 clap-verbosity-flag = "2.0.1"
 clio = { version = "0.3.3", features = ["clap-parse"] }
-configparser = "3.0.2"
-eyre = "0.6.8"
+eyre = { version = "0.6.8", default-features=false, features = ["auto-install"] }
 hexy = "0.1.4"
 log = "0.4.19"
 memmem = "0.1.1"
-serialport = "4.2.1"
-stderrlog = "0.5.4"
+serialport = { version = "4.2.1", default-features=false }
+stderrlog = { version = "0.5.4", default-features=false }
