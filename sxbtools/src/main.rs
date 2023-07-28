@@ -87,6 +87,8 @@ pub struct RawLength {
 }
 
 mod mon {
+    use std::io::Seek;
+
     use super::*;
     pub struct WdcMon(Box<dyn SerialPort>);
 
@@ -233,11 +235,13 @@ mod mon {
                     self.write_memory(addr, &buf)?;
 
                     if !skip_vec {
-                        let offset_to_vecs = 0x7efa - (addr as u64 + buf.len() as u64);
-                        io::copy(&mut file.by_ref().take(offset_to_vecs), &mut io::sink())?;
+                        let offset_to_vecs = 0x7efa - addr;
+                        debug!("offset to vectors is {:X}", offset_to_vecs);
+                        file.seek(io::SeekFrom::Start(offset_to_vecs as u64))?;
                         buf.truncate(6);
                         file.read(&mut buf)?;
 
+                        debug!("writing vectors ({:X?})", buf);
                         self.write_memory(0x7efa, &buf)?;
                     }
                 }
