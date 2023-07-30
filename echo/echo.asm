@@ -34,7 +34,11 @@ entry:
 PSTR hello, "Hello World!!\nThis is a test of the buffer function!!\n"
 
 .SECTION "VectorsImpl"
+irq:
+    jmp serial_isr
+
 unused:
+    jmp unused
 .ENDS
 
 ; FIXME: WLA doesn't handle ROM/RAM collisions well...
@@ -44,5 +48,5 @@ unused:
 .SECTION "Vectors" OVERWRITE ORGA VECTOR_ORG
 .dw unused
 .dw entry
-.dw serial_isr
+.dw irq
 .ENDS
