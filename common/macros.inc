@@ -4,6 +4,13 @@
 @end
 .ENDM
 
+.MACRO LD16
+lda #<\1
+sta.w \2
+lda #>\1
+sta.w (\2 + 1)
+.ENDM
+
 ; End-of-text section. Generated from "mcookie". Used as an "unlikely to
 ; be assembled string" to determine where to stop uploading a program to the
 ; W65C02SXB.

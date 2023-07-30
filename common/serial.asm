@@ -103,13 +103,10 @@ putc:
 ; Not thread-safe.
 putcacia:
     ; sei
+
     sta.w ACIA0.TDR
-    lda #168 ; Need to wait 160 ticks minimum at 115200 baud (16 clocks/char
-             ; * 10 chars). Use a margin of 5% to account for xtal tolerances.
-    sta.w VIA0.T2CL
-    lda #0
-    sta.w VIA0.T2CH ; Permit more interrupts to occur when P6 counts down
-                    ; (also clears IFR bit 5).
+    LD16 168, VIA0.T2CL ; Need to wait 160 ticks minimum at 115200 baud (16 clocks/char
+                        ; * 10 chars). Use a margin of 5% to account for xtal tolerances.
     ; cli
     rts
 
@@ -152,6 +149,9 @@ _putcbuf_nb:
 .ENDS
 
 .SECTION "SerialISR"
+; Redirect IRQ to this routine or JMP to this once it's been confirmed that
+; BIT5 of VIA IFR is set. RTI at end will take care of jumping back to user
+; thread.
 serial_isr:
     pha
     phx
