@@ -6,23 +6,20 @@ xmit_hd DB
 xmit_tail DB
 rx_hd DB
 rx_tail DB
-pstr_loc DW
 .ENDS
 
-.RAMSECTION "SerialVars"
+.RAMSECTION "SerialVars" SEMIFREE ORG $200
 xmit_buf DSB 16
 rx_buf DSB 16
+rx_errbuf DSB 6
 last_err DB
 .ENDS
-
-.DEFINE TX_OUT_OF_BOUNDS 0x01 EXPORT
-.DEFINE TX_BUFFER_FULL 0x02 EXPORT
 
 .BANK 0 SLOT 1 ; Assembles without this. Placed after main program, but all addrs
                ; are off... hmmm...
 .SECTION "Serial"
 ; Call before other routines.
-; Clobbers: A
+; Clobbers: A, X
 serial_init:
     ; Set up VIA Timer 2- leaves other bits alone
     lda #%00100000
@@ -52,8 +49,10 @@ serial_init:
     ; lda #$EA
     ldx #0
 @nextbuf
-    ; sta xmit_buf,X
+    ; sta.w xmit_buf,X
+    .16BIT ; stz.w doesn't work
     stz xmit_buf,X
+    .8BIT
     inx
     cpx #16
     bcs @nextbuf
@@ -64,7 +63,7 @@ serial_init:
 ; Input: A contains char to send.
 ; Output: Negative flag set if buffer was full.
 ;         N clear if char was xferred to buffer or ACIA.
-; Clobbers: X
+; Clobbers: A (preserved on failure/N set), X
 ; Thread-safe if used only with IRQ.
 putc:
     tax
@@ -89,7 +88,7 @@ putc:
     lda #%00100000
     tsb.w VIA0.IER ; And enable the int.
 
-    jsr cln ; Char successfully xferred.
+    bit #0 ; Char successfully xferred (clear N using val in A).
     cli ; End of modifying global state.
     rts
 @aciabusy:
@@ -127,25 +126,22 @@ _putcbuf_nb:
     cmp #1 ; If room for 1 left, buffer is full
     beq @full
 
-    ; If not full, but char in buffer.
+    ; If not full, put char in buffer.
     txa
     ldx xmit_hd ; Store the character.
-    sta xmit_buf,X
-    tax
+    sta.w xmit_buf, X
     inc xmit_hd ; Bump the head pointer
     lda #%11110000 ; modulo 16.
     trb xmit_hd
-    txa
+    lsr ; Char successfully stored (clear N using lsr).
     ; cli
-    jsr cln ; Char successfully stored.
     rts
 
 ; Return "wouldblock"
 @full
     txa
     ; cli
-    jsr sen
-    rts
+    jmp sen
 .ENDS
 
 .SECTION "SerialISR"
@@ -164,7 +160,7 @@ serial_isr:
     ; If not empty, it's time to send a new character, so do it. Also set up
     ; T2C low/high to schedule another interrupt.
     ldx xmit_tail
-    lda xmit_buf,X ; Get a char from the buffer
+    lda.w xmit_buf,X ; Get a char from the buffer
     jsr putcacia ; Transmit a new character
     inc xmit_tail ; Bump tail
     lda #%11110000 ; modulo 16.
@@ -186,8 +182,9 @@ serial_isr:
     jmp @end
 .ENDS
 
-; Clear Negative Flag by modifying flags on stack.
-; Should immediately be followed with an RTS.
+.SECTION "SerialExtra"
+; Clear Negative Flag by modifying flags on stack, preserving regs.
+; Should be jumped to as the last thing done before an RTS.
 cln:
     php
     phx
@@ -202,8 +199,8 @@ cln:
     plp
     rts
 
-; Set Negative Flag by modifying flags on stack.
-; Should immediately be followed with an RTS.
+; Set Negative Flag by modifying flags on stack, preserving regs.
+; Should be jumped to as the last thing done before an RTS.
 sen:
     php
     phx
@@ -213,3 +210,4 @@ sen:
     ora $103,X
     sta $103,X
     jmp cln@cleanup
+.ENDS
