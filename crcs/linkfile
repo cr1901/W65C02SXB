@@ -1,5 +1,6 @@
 [objects]
 crcs.o
+serial.o
 
 [libraries]
 bank 0 slot 1 ../common/periph.lib

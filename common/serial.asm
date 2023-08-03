@@ -142,6 +142,52 @@ _putcbuf_nb:
     txa
     ; cli
     jmp sen
+
+; Output: Negative flag set if buffer was empty.
+;         Negative and Overflow flag set on error.
+;         Overflow only ignored (SOB pin asserted?)
+;         N clear if char was xferred to A.
+;         Received char in A. last_err updated.
+; Clobbers:
+; Thread-safe if used only with IRQ.
+getc:
+    rts
+
+; Input: A contains char to send.
+; Output: Negative flag set if buffer was empty.
+;         Negative and Overflow flag set if low 3 bits of 
+;         Overflow only ignored (SOB pin asserted?)
+;         N clear if char was xferred to A.
+;         Received char in A.
+; Clobbers: X
+; Not thread-safe.
+_getcbuf_nb:
+    rts
+
+; Input: rx_hd contains curr char's status to place.
+; Output: Read and store ACIA STAT's low 3 bits in the correct window
+; of rx_errbuf.
+; Clobbers:
+; Not thread-safe.
+_pstat:
+    rts
+
+; Input: rx_tail contains curr char's status to retrieve.
+; Output: Retrieve ACIA STAT's low 3 bits in the correct window
+; of rx_errbuf.
+; Not thread-safe.
+_gstat:
+    rts
+
+; Output: Bits 0-2 of ACIA STAT register when the last char was received,
+; bits 3-7 cleared.
+; Thread-safe if used only with IRQ.
+getereason:
+    sei
+    lda.w last_err
+    cli
+    rts
+
 .ENDS
 
 .SECTION "SerialISR"

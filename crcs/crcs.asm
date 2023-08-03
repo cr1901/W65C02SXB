@@ -26,25 +26,40 @@ kermit_crc_table .DW 0x0000, 0x1081, 0x2102, 0x3183, 0x4204, 0x5285, 0x6306, 0x7
 
 .RAMSECTION "CRCZP" SLOT 0
 crc_xorval: DW
+ptr_hex: DW
 .ENDS
 
 .RAMSECTION "CRCVars" SLOT 0 ORG $200
-
 .ENDS
 
 .BANK 0 SLOT 1
 .SECTION "ENTRY"
 entry:
+    jsr serial_init
     ldy #1
     jsr init_crc
 
 @next:
     lda.w check,Y
-    jsr process_byte_rev
+    jsr process_byte
     iny
     cpy.w check
     BLE @next
 
+    LD16 crc_xorval, ptr_hex
+    jsr printhex16
+
+    ldy #1
+    jsr init_crc
+@next2:
+    lda.w check,Y
+    jsr process_byte_rev
+    iny
+    cpy.w check
+    BLE @next2
+
+    LD16 crc_xorval, ptr_hex
+    jsr printhex16
 @done:
     sta.w BUS0
     jmp @done
@@ -143,13 +158,71 @@ process_nibble_rev:
     pla
     rts
 
-; 0100110101101111
+hex2ascii:
+    and #%00001111
+    cmp #0xA
+    bcs @a_to_f
+    adc #'0'
+    rts
+@a_to_f:
+    adc #('A' - 10 - 1) ; Carry is set, so add one less.
+    rts
+
+; Print hex number pointed to by ptr_hex to ACIA.
+; FIXME: Not memory safe (ptr length not verified).
+; Clobbers: A, X, ptr_hex
+printhex16:
+    lda #'0'
+    jsr putc
+    lda #'x'
+    jsr putc
+    clc
+    lda ptr_hex
+    adc #1
+    sta ptr_hex
+    lda ptr_hex + 1
+    adc #0
+    sta ptr_hex + 1
+    lda (ptr_hex)
+    lsr
+    lsr
+    lsr
+    lsr
+    jsr hex2ascii
+    jsr putc
+    lda (ptr_hex)
+    jsr hex2ascii
+    jsr putc
+    sec
+    lda ptr_hex
+    sbc #1
+    sta ptr_hex
+    lda ptr_hex + 1
+    sbc #0
+    sta ptr_hex + 1
+    lda (ptr_hex)
+    lsr
+    lsr
+    lsr
+    lsr
+    jsr hex2ascii
+    jsr putc
+    lda (ptr_hex)
+    jsr hex2ascii
+    jsr putc
+    lda #0xA
+    jsr putc
+    rts
 
 PSTR check, "123456789"
 .ENDS
 
 .SECTION "VectorsImpl"
+irq:
+    jmp serial_isr
+
 unused:
+    jmp unused
 .ENDS
 
 ; FIXME: WLA doesn't handle ROM/RAM collisions well...
@@ -159,5 +232,5 @@ unused:
 .SECTION "Vectors" OVERWRITE ORGA VECTOR_ORG
 .dw unused
 .dw entry
-.dw unused
+.dw serial_isr
 .ENDS
