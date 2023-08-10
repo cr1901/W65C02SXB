@@ -8,3 +8,5 @@ for p in board.GetPads():
     g = p.GetParentGroup()
     if g and g.GetName() == 'PRI_RAIL':
         p.SetNet(nets["+5V"])
+    if g and g.GetName() == 'GND_RAIL':
+        p.SetNet(nets["GND"])
