@@ -1,3 +1,4 @@
+from pathlib import Path
 from KicadModTree import Footprint, KicadFileHandler, ModArgparser, Pad, \
     PadArray, Text
 
@@ -49,8 +50,7 @@ def proto_footprint(args):
                           text=footprint_name, at=[1.5, 3], layer="F.Fab"))
 
     org_x = 0  # Attempt to place middle of proto area at
-    even_bias = 1 if args["num_cols"] % 2 else 0
-    org_y = -(args["num_cols"] - even_bias)*2.54/2  # origin by default.
+    org_y = -(args["num_rows"] - 1)*2.54/2  # origin by default.
 
     curr_pad = 1
     for r in range(args["num_rows"]):
@@ -94,7 +94,8 @@ def proto_footprint(args):
 
     # Write file
     file_handler = KicadFileHandler(kicad_mod)
-    file_handler.writeFile('example_footprint.kicad_mod')
+    file_handler.writeFile(Path("./proto.pretty") / (args["name"] +
+                           " Prototype Area.kicad_mod"))
 
 
 if __name__ == "__main__":
