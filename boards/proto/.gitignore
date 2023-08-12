@@ -31,3 +31,5 @@ fp-info-cache
 
 # https://techoverflow.net/2020/06/13/what-gitignore-to-use-for-kicad-projects/
 \#auto_saved_files\#
+
+/gerber
