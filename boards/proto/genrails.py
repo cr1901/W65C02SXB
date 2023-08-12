@@ -135,6 +135,3 @@ for i, r in enumerate(rails):
         track.SetLayer(pcbnew.B_Cu)
         track.SetNet(nets[r])
         board.Add(track)
-
-        # board.RemoveNative(t)
-
